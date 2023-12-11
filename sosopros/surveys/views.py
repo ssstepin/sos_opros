@@ -71,7 +71,7 @@ class QuestionStatistics:
         self.chart = chart
 
 
-def get_chart():
+def get_chart(): # debug
     q = {
         'a': 3,
         'b': 3,
