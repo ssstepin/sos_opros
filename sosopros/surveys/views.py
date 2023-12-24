@@ -83,6 +83,9 @@ def get_chart(): # debug
 def home(request):
     return render(request, 'home.html')
 
+def home_redirect(request):
+    return redirect('/home')
+
 
 def logout_view(request):
     logout(request)
