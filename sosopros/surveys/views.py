@@ -1,6 +1,6 @@
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from django.forms import ModelForm
+from django.forms import ModelForm, Form, ChoiceField, RadioSelect, BaseFormSet, formset_factory
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import login, logout
 from django.shortcuts import render, redirect, get_object_or_404
@@ -165,3 +165,64 @@ def create_option(request, spk, qpk):
     return render(request, "surveys/options.html",
                   {'survey': related_survey, 'question': related_question, 'options': question_options,
                    'form': option_form})
+
+
+class SubmissionForm(Form):
+    def __init__(self, *args, **kwargs):
+        options = kwargs.pop("options")
+        choices = {(op.pk, op.text) for op in options}
+        super().__init__(*args, **kwargs)
+        op_field = ChoiceField(choices=choices, widget=RadioSelect, required=True)
+        self.fields["option"] = op_field
+
+
+def create_question_form(questions, formset):
+    return zip(questions, formset)
+
+
+class BaseSubmissionFormSet(BaseFormSet):
+    def get_form_kwargs(self, index):
+        ret = super().get_form_kwargs(index)
+        ret["options"] = ret["options"][index]
+        return ret
+
+
+def begin_survey(request, spk):
+    survey = get_object_or_404(Survey, pk=spk)
+    if request.method == "POST":
+        submission = SubmitProxy.objects.create(_survey=survey)
+        return redirect("survey_submit", survey_key=spk, submit_key=submission.pk)
+    else:
+        return render(request, "surveys/start.html", {"survey": survey})
+
+
+def submit_survey(request, survey_key, submit_key):
+    survey = Survey.objects.prefetch_related("question_set__option_set").get(pk=survey_key)
+    submission = survey.submitproxy_set.get(pk=submit_key)
+    all_options = [q.option_set.all() for q in survey.question_set.all()]
+    SubmissionFormSet = formset_factory(SubmissionForm, formset=BaseSubmissionFormSet)  # creating class
+    if request.method == "POST":
+        formset = SubmissionFormSet(request.POST, form_kwargs={"empty_permitted": False, "options": all_options})
+        if formset.is_valid():
+            for form in formset:
+                QuestionResult.objects.create(
+                    option_id=form.cleaned_data["option"], _submission_id=submit_key,
+                )
+
+            submission.is_complete = True
+            submission.save()
+        return redirect("survey_end", spk=survey_key)
+
+    else:
+        formset = SubmissionFormSet(form_kwargs={"empty_permitted": False, "options": all_options})
+
+    return render(
+        request,
+        "surveys/submit.html",
+        {"survey": survey, "question_forms": create_question_form(survey.question_set.all(), formset),
+         "formset": formset},
+    )
+
+def survey_end(request, spk):
+    messages.success(request, "Thanks for submitting!")
+    return redirect('/home')
