@@ -115,7 +115,7 @@ def edit_survey(request, pk):
 
     if request.method == "POST":
         survey.save()
-        return redirect("survey_details", pk=pk)
+        return redirect("surveys")
     else:
         related_questions = survey.question_set.all()
         return render(request, "surveys/edit.html", {"survey": survey, "questions": related_questions})
