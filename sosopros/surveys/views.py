@@ -203,7 +203,7 @@ def submit_survey(request, survey_key, submit_key):
     survey = Survey.objects.prefetch_related("question_set__option_set").get(pk=survey_key)
     submission = survey.submitproxy_set.get(pk=submit_key)
     all_options = [q.option_set.all() for q in survey.question_set.all()]
-    SubmissionFormSet = formset_factory(SubmissionForm, formset=BaseSubmissionFormSet)  # creating class
+    SubmissionFormSet = formset_factory(SubmissionForm, extra=len(survey.question_set.all()), formset=BaseSubmissionFormSet)  # creating class
     if request.method == "POST":
         formset = SubmissionFormSet(request.POST, form_kwargs={"empty_permitted": False, "options": all_options})
         if formset.is_valid():
