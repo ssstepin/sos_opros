@@ -199,6 +199,7 @@ def begin_survey(request, spk):
         return render(request, "surveys/start.html", {"survey": survey})
 
 
+
 def submit_survey(request, survey_key, submit_key):
     survey = Survey.objects.prefetch_related("question_set__option_set").get(pk=survey_key)
     submission = survey.submitproxy_set.get(pk=submit_key)
@@ -206,7 +207,8 @@ def submit_survey(request, survey_key, submit_key):
     SubmissionFormSet = formset_factory(SubmissionForm, extra=len(survey.question_set.all()), formset=BaseSubmissionFormSet)  # creating class
     if request.method == "POST":
         formset = SubmissionFormSet(request.POST, form_kwargs={"empty_permitted": False, "options": all_options})
-        if formset.is_valid():
+        # print([form.has_changed() for form in formset])
+        if formset.is_valid() and all([form.has_changed() for form in formset]):
             for form in formset:
                 QuestionResult.objects.create(
                     option_id=form.cleaned_data["option"], _submission_id=submit_key,
@@ -214,7 +216,10 @@ def submit_survey(request, survey_key, submit_key):
 
             submission.is_complete = True
             submission.save()
-        return redirect("survey_end", spk=survey_key)
+            return redirect("survey_end", spk=survey_key)
+        else:
+            messages.error(request, "Survey isn't filled")
+            return redirect("survey_submit", survey_key=survey_key, submit_key=submit_key)
 
     else:
         formset = SubmissionFormSet(form_kwargs={"empty_permitted": False, "options": all_options})
