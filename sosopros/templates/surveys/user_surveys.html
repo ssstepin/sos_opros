@@ -23,9 +23,13 @@
                 <td>{{ survey.title }}</td>
                 <td>
                      <a href="{% url 'survey_details' survey.pk %}">
-                        <div class="ui button">view</div>
+                        <div class="ui button">View results</div>
+                     </a>
+                    <a href="{% url 'survey_begin' survey.pk %}">
+                        <div class="ui button">Take survey</div>
                      </a>
                 </td>
+
             </tr>
             {% endfor %}
         </tbody>
