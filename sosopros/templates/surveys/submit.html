@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+ {% extends "base.html" %}
 
 {% block content %}
 <style>
@@ -20,7 +20,7 @@
         <div class="ui basic padded segment left aligned">
             <div class="ui form {% if form.errors %}error{% endif %}">
                 <h4 class="ui header">
-                    Question {{ forloop.counter }}: {{ question.prompt }}
+                    Question {{ forloop.counter }}: {{ question.text }}
                 </h4>
                 {% for field in form %}
                 <div class="field {% if field.errors %}error{% endif %}">
