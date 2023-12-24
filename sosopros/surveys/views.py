@@ -199,6 +199,7 @@ def begin_survey(request, spk):
         return render(request, "surveys/start.html", {"survey": survey})
 
 
+
 def submit_survey(request, survey_key, submit_key):
     survey = Survey.objects.prefetch_related("question_set__option_set").get(pk=survey_key)
     submission = survey.submitproxy_set.get(pk=submit_key)
