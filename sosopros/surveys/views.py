@@ -71,12 +71,15 @@ class QuestionStatistics:
         self.chart = chart
 
 
-def get_chart(): # debug
+def get_chart(question : Question): # debug
+    all_options = question.option_set.all()
+
     q = {
-        'a': 3,
-        'b': 3,
+        op.text : len(QuestionResult.objects.filter(option=op))
+        for op in all_options
     }
-    fig = px.pie(values=q.values(), names=q.keys(), title=f"ABOBA")
+    print(q)
+    fig = px.pie(values=q.values(), names=q.keys(), title=f"{question.text}")
     return fig.to_html()
 
 
@@ -102,7 +105,7 @@ def get_user_surveys(request):
 @login_required
 def survey_details(request, pk):
     survey = Survey.objects.prefetch_related('question_set').get(pk=pk, _user=request.user)
-    questions = [QuestionStatistics(q, get_chart()) for q in survey.question_set.all()]
+    questions = [QuestionStatistics(q, get_chart(q)) for q in survey.question_set.all()]
     return render(request, "surveys/survey.html", {"survey": survey, "questions": questions})
 
 
