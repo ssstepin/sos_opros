@@ -71,20 +71,31 @@ class QuestionStatistics:
         self.chart = chart
 
 
-def get_chart(question : Question): # debug
+def get_chart(question: Question):  # debug
     all_options = question.option_set.all()
 
     q = {
-        op.text : len(QuestionResult.objects.filter(option=op))
+        op.text: len(QuestionResult.objects.filter(option=op))
         for op in all_options
     }
-    print(q)
+    # print(q)
     fig = px.pie(values=q.values(), names=q.keys(), title=f"{question.text}")
     return fig.to_html()
 
 
+def get_survey_count(survey):
+    return len(SubmitProxy.objects.filter(_survey=survey))
+
+
+class SurveyInfo:
+    def __init__(self, survey, cnt):
+        self.survey = survey
+        self.count = cnt
+
+
 def home(request):
     return render(request, 'home.html')
+
 
 def home_redirect(request):
     return redirect('/home')
@@ -99,7 +110,10 @@ def logout_view(request):
 def get_user_surveys(request):
     cur_user = request.user
     surveys = Survey.objects.filter(_user=cur_user)
-    return render(request, "surveys/user_surveys.html", {"surveys": surveys})
+    surveys_data = [
+        {"survey": survey, "count": get_survey_count(survey)} for survey in surveys
+    ]
+    return render(request, "surveys/user_surveys.html", {"surveys": surveys_data})
 
 
 @login_required
@@ -135,7 +149,6 @@ def create_survey(request):
             new_survey.save()  # Now save
             return redirect("survey_edit", pk=new_survey.id)
     return render(request, "surveys/create.html", {"form": survey_form})
-
 
 
 @login_required
@@ -203,12 +216,12 @@ def begin_survey(request, spk):
         return render(request, "surveys/start.html", {"survey": survey})
 
 
-
 def submit_survey(request, survey_key, submit_key):
     survey = Survey.objects.prefetch_related("question_set__option_set").get(pk=survey_key)
     submission = survey.submitproxy_set.get(pk=submit_key)
     all_options = [q.option_set.all() for q in survey.question_set.all()]
-    SubmissionFormSet = formset_factory(SubmissionForm, extra=len(survey.question_set.all()), formset=BaseSubmissionFormSet)  # creating class
+    SubmissionFormSet = formset_factory(SubmissionForm, extra=len(survey.question_set.all()),
+                                        formset=BaseSubmissionFormSet)  # creating class
     if request.method == "POST":
         formset = SubmissionFormSet(request.POST, form_kwargs={"empty_permitted": False, "options": all_options})
         # print([form.has_changed() for form in formset])
@@ -234,6 +247,7 @@ def submit_survey(request, survey_key, submit_key):
         {"survey": survey, "question_forms": create_question_form(survey.question_set.all(), formset),
          "formset": formset},
     )
+
 
 def survey_end(request, spk):
     messages.success(request, "Thanks for submitting!")
