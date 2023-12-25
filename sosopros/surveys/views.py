@@ -79,7 +79,8 @@ def get_chart(question: Question):  # debug
         for op in all_options
     }
     # print(q)
-    fig = px.pie(values=q.values(), names=q.keys(), title=f"{question.text}")
+    fig = px.pie(values=q.values(), names=q.keys(), title=f"{question.text}",
+                 color_discrete_sequence=px.colors.sequential.Blues_r)
     return fig.to_html()
 
 

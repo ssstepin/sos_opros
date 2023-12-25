@@ -40,3 +40,18 @@
   background-color: var(--color-success);
   color: var(--color-light);
 }
+
+input[type='text'],
+input[type='email'],
+input[type='password'],
+textarea {
+  border-radius: var(--border-radius);
+  border: solid 1px var(--color-gray);
+  width: 100%;
+  padding: 0.25rem 0.75rem;
+}
+
+form > input[type='submit'],
+form > button {
+  margin: 1rem 0;
+}
