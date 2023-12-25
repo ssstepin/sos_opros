@@ -80,7 +80,7 @@ def get_chart(question: Question):  # debug
     }
     # print(q)
     fig = px.pie(values=q.values(), names=q.keys(), title=f"{question.text}",
-                 color_discrete_sequence=px.colors.sequential.Blues_r)
+                 color_discrete_sequence=px.colors.sequential.Blues_r, hole=3)
     return fig.to_html()
 
 
